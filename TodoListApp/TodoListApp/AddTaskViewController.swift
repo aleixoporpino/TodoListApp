@@ -14,10 +14,11 @@ class AddTaskViewController: UIViewController {
     var task: Task?
 
     @IBOutlet weak var textView: UITextView!
+    @IBOutlet weak var notesTextView: UITextView!
     @IBOutlet weak var priorityControl: UISegmentedControl!
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
-    @IBOutlet weak var bottonConstraint: NSLayoutConstraint!
+    //@IBOutlet weak var bottonConstraint: NSLayoutConstraint!
     
     @IBOutlet weak var switchDueDate: UISwitch!
     @IBOutlet weak var dueDate: UIDatePicker!
@@ -26,6 +27,7 @@ class AddTaskViewController: UIViewController {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.hideKeyboardWhenTappedAround()
         
         saveButton.layer.cornerRadius = 10
         saveButton.clipsToBounds = true
@@ -34,18 +36,20 @@ class AddTaskViewController: UIViewController {
         dueDate.setValue(UIColor.white, forKey: "textColor")
         
         
-        NotificationCenter.default.addObserver(
+        /*NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow(with: )),
             name: UIResponder.keyboardWillShowNotification,
             object: nil
-        )
+        )*/
         
         textView.becomeFirstResponder()
         
         if let task = task {
             textView.text = ""
-            textView.text = task.title
+            textView.text = task.name
+            notesTextView.text = "Type here.."
+            notesTextView.text = task.notes
             priorityControl.selectedSegmentIndex = Int(task.priority)
             
             if task.duedate != nil {
@@ -60,7 +64,7 @@ class AddTaskViewController: UIViewController {
     }
     
     
-    @objc func keyboardWillShow(with notification: Notification) {
+    /*@objc func keyboardWillShow(with notification: Notification) {
         let key = "UIKeyboardFrameEndUserInfoKey"
         guard let keyboardFrame = notification.userInfo?[key] as? NSValue else { return }
         
@@ -71,7 +75,7 @@ class AddTaskViewController: UIViewController {
             self.view.layoutIfNeeded()
         }
         
-    }
+    }*/
     
     @IBAction func cancel(_ sender: UIButton) {
         dismiss()
@@ -82,6 +86,7 @@ class AddTaskViewController: UIViewController {
             setTaskValues(task)
         } else {
             let task = Task(context: managedContext)
+            task.date = Date()
             setTaskValues(task)
         }
         
@@ -99,13 +104,17 @@ class AddTaskViewController: UIViewController {
     }
     
     func setTaskValues(_ task:Task) {
-        guard let title = textView.text, !title.isEmpty else {
+        guard let name = textView.text, !name.isEmpty else {
             return
         }
-        task.title = title
+        task.name = name
+        task.notes = notesTextView.text ?? ""
+        if notesTextView.text == "Type here..." {
+            task.notes = ""
+        }
         task.priority = Int16(priorityControl.selectedSegmentIndex)
-        task.date = Date()
-        if(switchDueDate.isOn){
+        task.completed = false
+        if switchDueDate.isOn {
            task.duedate = dueDate.date
         } else {
             task.duedate = nil
@@ -115,15 +124,26 @@ class AddTaskViewController: UIViewController {
 
 extension AddTaskViewController: UITextViewDelegate {
     func textViewDidChangeSelection(_ textView: UITextView) {
-        if saveButton.isHidden {
+        if saveButton.isHidden || textView.text.contains("Type here") {
             textView.text.removeAll()
             textView.textColor = .white
             
             saveButton.isHidden = false
             
-            UIView.animate(withDuration: 0.3) {
+            UIView.animate(withDuration: 0.4) {
                 self.view.layoutIfNeeded()
             }
         }
+    }
+}
+extension UIViewController {
+    func hideKeyboardWhenTappedAround() {
+        let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(UIViewController.dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
     }
 }
