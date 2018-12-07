@@ -1,10 +1,11 @@
-//
 //  AddTaskViewController.swift
-//  TodoListApp
+//  Assignment2-TodoListApp
+//  App Description: A simple todo list with all basic operations using core data
 //
-//  Created by Aleixo Porpino Filho on 2018-12-02.
-//  Copyright © 2018 Porpapps. All rights reserved.
+//  Created by Jose Aleixo Porpino Filho on 2018-12-07.
+//  Student ID 301005491
 //
+//  Version 1.0.0
 
 import UIKit
 import CoreData
@@ -18,33 +19,27 @@ class AddTaskViewController: UIViewController {
     @IBOutlet weak var priorityControl: UISegmentedControl!
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
-    //@IBOutlet weak var bottonConstraint: NSLayoutConstraint!
     
     @IBOutlet weak var switchDueDate: UISwitch!
     @IBOutlet weak var dueDate: UIDatePicker!
     @IBAction func onSwitchDueDate(_ sender: UISwitch) {
         dueDate.isHidden = !sender.isOn
     }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.hideKeyboardWhenTappedAround()
         
+        // Set the buttons with rounds
         saveButton.layer.cornerRadius = 10
         saveButton.clipsToBounds = true
         cancelButton.layer.cornerRadius = 10
         cancelButton.clipsToBounds = true
         dueDate.setValue(UIColor.white, forKey: "textColor")
         
-        
-        /*NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillShow(with: )),
-            name: UIResponder.keyboardWillShowNotification,
-            object: nil
-        )*/
-        
         textView.becomeFirstResponder()
         
+        // Get the task if existent from another screen
         if let task = task {
             textView.text = ""
             textView.text = task.name
@@ -63,24 +58,12 @@ class AddTaskViewController: UIViewController {
         dueDate.isHidden = !switchDueDate.isOn
     }
     
-    
-    /*@objc func keyboardWillShow(with notification: Notification) {
-        let key = "UIKeyboardFrameEndUserInfoKey"
-        guard let keyboardFrame = notification.userInfo?[key] as? NSValue else { return }
-        
-        let keyboardHeight = keyboardFrame.cgRectValue.height + 16
-        
-        bottonConstraint.constant = keyboardHeight
-        UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded()
-        }
-        
-    }*/
-    
+    // Cancel button
     @IBAction func cancel(_ sender: UIButton) {
         dismiss()
     }
     
+    // Save the task in core data and dismiss
     @IBAction func save(_ sender: UIButton) {
         if let task = self.task {
             setTaskValues(task)
@@ -98,11 +81,13 @@ class AddTaskViewController: UIViewController {
         }
     }
     
+    // Dismiss the screen
     func dismiss() {
         dismiss(animated: true)
         textView.resignFirstResponder()
     }
     
+    // Set the properties of the tasks according to the functionality
     func setTaskValues(_ task:Task) {
         guard let name = textView.text, !name.isEmpty else {
             return
@@ -122,6 +107,7 @@ class AddTaskViewController: UIViewController {
     }
 }
 
+// Extension to unhide the save button when user tap in the texts
 extension AddTaskViewController: UITextViewDelegate {
     func textViewDidChangeSelection(_ textView: UITextView) {
         if saveButton.isHidden || textView.text.contains("Type here") {
@@ -136,6 +122,8 @@ extension AddTaskViewController: UITextViewDelegate {
         }
     }
 }
+
+// Extension to hide the keyboard if tap in the screen
 extension UIViewController {
     func hideKeyboardWhenTappedAround() {
         let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(UIViewController.dismissKeyboard))

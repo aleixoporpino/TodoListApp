@@ -1,41 +1,48 @@
-//
 //  TodoTableViewController.swift
-//  TodoListApp
+//  Assignment2-TodoListApp
+//  App Description: A simple todo list with all basic operations using core data
 //
-//  Created by Aleixo Porpino Filho on 2018-12-02.
-//  Copyright © 2018 Porpapps. All rights reserved.
+//  Created by Jose Aleixo Porpino Filho on 2018-12-07.
+//  Student ID 301005491
 //
+//  Version 1.0.0
 
 import UIKit
 import CoreData
 
 class TodoTableViewController: UITableViewController {
     
+    // Results of the tasks in coredata
     var resultsController: NSFetchedResultsController<Task>!
-    //var completedResultsController: NSFetchedResultsController<Task>!
     let coreDataStack = CoreDataStack()
     
+    // Bi Dimensional
     var tasks:[[Task]] = [[]]
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        //populateTasksInArray()
-        //findCompletedTasks()
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        //Populate all the core data in the array tasks.
         populateTasksInArray()
-        self.tableView.reloadData()
+        reloadTableView()
+    }
+    //Reload the tableview with the new data.
+    func reloadTableView() {
+        UIView.transition(with: tableView,
+                          duration: 0.35,
+                          options: .transitionCrossDissolve,
+                          animations: { self.tableView.reloadData() })
     }
     
+    // Get the core data with sort and push to tasks array
     func populateTasksInArray() {
         tasks = [[]]
         let request: NSFetchRequest<Task> = Task.fetchRequest()
-        //let predicate = NSPredicate(format: "completed == 0")
+        // sort tasks by date
         let sortDescriptors = NSSortDescriptor(key: "date", ascending: true)
         
-        //request.predicate = predicate
         request.sortDescriptors = [sortDescriptors]
         resultsController = NSFetchedResultsController(
             fetchRequest: request,
@@ -43,7 +50,6 @@ class TodoTableViewController: UITableViewController {
             sectionNameKeyPath: nil,
             cacheName: nil)
         
-        //uncompletedResultsController.delegate = self
         do {
             try resultsController.performFetch()
             if resultsController.fetchedObjects != nil {
@@ -67,15 +73,17 @@ class TodoTableViewController: UITableViewController {
         }
     }
     
+    // Number of sections that the table view will have
     override func numberOfSections(in tableView: UITableView) -> Int {
         return tasks.count
     }
 
-    // MARK: - Table view data source
+    // Number of the tasks per section
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tasks[section].count
     }
     
+    // Set the header of the sections
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let label = UILabel.init(frame: CGRect(x:50,y:0,width: 100,height:60))
         label.font = UIFont(name:"Charter", size: 20.0)
@@ -91,6 +99,7 @@ class TodoTableViewController: UITableViewController {
         return label
     }
     
+    // Return the cells
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath)
         
@@ -100,6 +109,7 @@ class TodoTableViewController: UITableViewController {
         return cell
     }
     
+    // When swipe to the right will show the Delete button
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let action = UIContextualAction(style: .destructive, title: "Delete") {
             (action, view, completion) in
@@ -110,20 +120,21 @@ class TodoTableViewController: UITableViewController {
             do {
                 try self.resultsController.managedObjectContext.save()
                 self.tasks[indexPath.section].remove(at: indexPath.row)
-                tableView.reloadData()
+                self.reloadTableView()
                 completion(true)
             } catch {
                 print("Error when try to delete: \(error)")
                 completion(false)
             }
         }
-        //action.image = #imageLiteral(resourceName: "cancel")
         action.backgroundColor = UIColor(rgb:0x941100)
         return UISwipeActionsConfiguration(actions: [action])
     }
     
+    // When swipe to the left will show the Check button
     override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let task = self.tasks[indexPath.section][indexPath.row]
+        // Verify if this task can be completed or not
         if task.completed == false {
             let action = UIContextualAction(style: .destructive, title: "Check") {
                 (action, view, completion) in
@@ -133,16 +144,13 @@ class TodoTableViewController: UITableViewController {
                         self.tasks[indexPath.section].remove(at: indexPath.row)
                         self.tasks[indexPath.section+1].append(task)
                         try self.resultsController.managedObjectContext.save()
-                        tableView.reloadData()
+                        self.reloadTableView()
                         completion(true)
                     } catch {
                         print("Error when try to check: \(error)")
                         completion(false)
                     }
                 }
-            
-    
-        //action.image = #imageLiteral(resourceName: "success")
             action.backgroundColor = UIColor(rgb: 0x009051)
     
             return UISwipeActionsConfiguration(actions: [action])
@@ -151,6 +159,7 @@ class TodoTableViewController: UITableViewController {
         }
     }
     
+    // Show the details or add new task screen
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "ShowAddNewTask", sender: tableView.cellForRow(at: indexPath))
     }
@@ -173,6 +182,7 @@ class TodoTableViewController: UITableViewController {
         }
     }
     
+    // set the cell components according to the task
     func populate(cell: UITableViewCell, task:Task) {
         
         cell.textLabel!.font = UIFont(name:"Charter", size: 17.0)
